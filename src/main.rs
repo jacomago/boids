@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use boids::flock::Flock;
 use nannou::{
     noise::{NoiseFn, Perlin},
@@ -27,10 +29,36 @@ struct Model {
 
 const SIZE: usize = 500;
 
+pub fn frame_path(app: &App) -> PathBuf {
+    save_path(app)
+        .join(format!("{:03}", app.elapsed_frames()))
+        .with_extension("png")
+}
+
+pub fn save_path(app: &App) -> PathBuf {
+    app.assets_path()
+        .expect("Expected project path")
+        .join("images")
+        .join(app.exe_name().unwrap())
+}
+
 fn key_pressed(app: &App, model: &mut Model, key: Key) {
-    let mut y_force = model.wind_force.y;
-    interaction::key_pressed(app, &mut y_force, &mut model.wind_force.x, key);
-    model.wind_force.y = y_force;
+    match key {
+        Key::S => app.main_window().capture_frame(frame_path(app)),
+        Key::Up => model.wind_force.y += 0.001,
+        Key::Down => {
+            if model.wind_force.y > 0.0 {
+                model.wind_force.y -= 0.001;
+            }
+        }
+        Key::Right => model.wind_force.x += 0.001,
+        Key::Left => {
+            if model.wind_force.x > 0.0 {
+                model.wind_force.x -= 0.001;
+            }
+        }
+        _other_key => {}
+    }
 }
 
 fn ui_view(_app: &App, model: &Model, frame: Frame) {
